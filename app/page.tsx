@@ -1,221 +1,218 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-interface AvailabilitySlot {
-    locationId: string;
-    locationName: string;
-    availability: number;
-    bookableFrom: string;
-    status: string;
-    slotReferencesInCentre: string;
-    dateTime: string;
+interface Location {
+    id: string;
+    name: string;
+    type: 'padel' | 'tennis';
+    available: boolean;
+    description: string;
+    hasFloodLights?: boolean;
 }
 
-interface ApiResponse {
-    success: boolean;
-    data: AvailabilitySlot[];
-    lastUpdated: string;
-    totalSlots: number;
-}
+const locations: Location[] = [
+    {
+        id: 'triangle-padel',
+        name: 'Triangle Padel',
+        type: 'padel',
+        available: true,
+        description: 'The Triangle Leisure Centre - Padel Courts',
+        hasFloodLights: true
+    },
+    {
+        id: 'triangle-tennis',
+        name: 'Triangle Tennis',
+        type: 'tennis',
+        available: true,
+        description: 'The Triangle Leisure Centre - Tennis Courts',
+        hasFloodLights: true
+    },
+    {
+        id: 'patcham-tennis',
+        name: 'Patcham Tennis',
+        type: 'tennis',
+        available: true,
+        description: 'Patcham Tennis Courts',
+        hasFloodLights: false
+    },
+    {
+        id: 'hove-padel',
+        name: 'Hove Padel',
+        type: 'padel',
+        available: false,
+        description: 'Seafront Padel Courts',
+        hasFloodLights: true
+    },
+    {
+        id: 'hove-tennis',
+        name: 'Hove Tennis',
+        type: 'tennis',
+        available: true,
+        description: 'Seafront Tennis Courts',
+        hasFloodLights: true
+    },
+    {
+        id: 'archbishop-tennis',
+        name: 'Archbishop Tennis',
+        type: 'tennis',
+        available: false,
+        description: 'Archbishop Tennis Courts',
+        hasFloodLights: false
+    },
+    {
+        id: 'hyde-park-tennis',
+        name: 'Hyde Park Tennis',
+        type: 'tennis',
+        available: false,
+        description: 'Hyde Park Tennis Courts',
+        hasFloodLights: false
+    }
+];
 
-export default function PadelTracker() {
-    const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [lastUpdated, setLastUpdated] = useState<string>('');
-    const [error, setError] = useState<string>('');
+export default function LocationsPage() {
 
-    const fetchAvailability = async () => {
-        try {
-            setLoading(true);
-            setError('');
-            const response = await fetch('/api/availability');
-            const data: ApiResponse = await response.json();
 
-            if (data.success) {
-                setSlots(data.data);
-                setLastUpdated(data.lastUpdated);
-            } else {
-                setError('Failed to fetch availability data');
-            }
-        } catch (err) {
-            setError('Error fetching data');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const getTypeColor = (type: 'padel' | 'tennis') => {
+        return type === 'padel'
+            ? 'bg-green-100 text-green-800 border-green-200'
+            : 'bg-blue-100 text-blue-800 border-blue-200';
     };
-
-    useEffect(() => {
-        fetchAvailability();
-    }, []);
-
-    const groupSlotsByDay = (slots: AvailabilitySlot[]) => {
-        const grouped: { [key: string]: AvailabilitySlot[] } = {};
-
-        slots.forEach(slot => {
-            const date = new Date(slot.dateTime);
-            const dayKey = date.toLocaleDateString('en-GB', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric'
-            });
-
-            if (!grouped[dayKey]) {
-                grouped[dayKey] = [];
-            }
-            grouped[dayKey].push(slot);
-        });
-
-        // Sort slots within each day by time
-        Object.keys(grouped).forEach(day => {
-            grouped[day].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-        });
-
-        return grouped;
-    };
-
-    const groupedSlots = groupSlotsByDay(slots);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="text-center mb-10">
+                <div className="text-center mb-12" suppressHydrationWarning>
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
-                    <h1 className="text-5xl font-bold text-gray-900 mb-3">
-                        Padel Tracker
+                    <h1 className="text-5xl font-bold text-gray-900 mb-3" suppressHydrationWarning>
+                        Court Tracker
                     </h1>
-                    <p className="text-xl text-gray-700 mb-2">
-                        The Triangle Leisure Centre
+                    <p className="text-xl text-gray-700 mb-2" suppressHydrationWarning>
+                        Local Court Availability
                     </p>
-                    <p className="text-green-700 font-medium">
-                        Available Court Times - Next 2 Weeks
+                    <p className="text-green-700 font-medium" suppressHydrationWarning>
+                        Select a location to view court availability
                     </p>
-                    {lastUpdated && (
-                        <p className="text-sm text-gray-600 mt-3">
-                            Last updated: {new Date(lastUpdated).toLocaleString()}
-                        </p>
-                    )}
                 </div>
 
-                {/* Refresh Button */}
-                <div className="flex justify-center mb-8">
-                    <button
-                        onClick={fetchAvailability}
-                        disabled={loading}
-                        className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-8 py-3 rounded-full font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
-                    >
-                        {loading ? (
-                            <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                Checking Courts...
-                            </div>
-                        ) : (
-                            'Refresh Availability'
-                        )}
-                    </button>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 rounded-lg mb-8 max-w-2xl mx-auto">
-                        <div className="flex">
-                            <div className="flex-shrink-0">
-                                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div className="ml-3">
-                                <p className="font-medium">{error}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Loading State */}
-                {loading && slots.length === 0 ? (
-                    <div className="text-center py-16">
-                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-200 border-t-green-600 mx-auto mb-6"></div>
-                        <p className="text-xl text-gray-700 font-medium">Checking court availability...</p>
-                        <p className="text-gray-600 mt-2">This may take a moment</p>
-                    </div>
-                ) : (
-                    <>
-                        {/* Stats */}
-                        {slots.length > 0 && (
-                            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 max-w-md mx-auto">
-                                <div className="text-center">
-                                    <div className="text-3xl font-bold text-green-600 mb-1">{slots.length}</div>
-                                    <div className="text-gray-700 font-medium">Available Slots Found</div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Available Slots */}
-                        <div className="space-y-8">
-                            {Object.entries(groupedSlots).map(([day, daySlots]) => (
-                                <div key={day} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                                    <div className="bg-green-600 text-white px-6 py-4">
-                                        <h2 className="text-2xl font-bold flex items-center">
-                                            {day}
-                                            <span className="ml-auto text-sm bg-green-500 px-3 py-1 rounded-full">
-                                                {daySlots.length} slots
-                                            </span>
-                                        </h2>
-                                    </div>
-                                    <div className="p-6">
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                                            {daySlots.map((slot, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center hover:bg-green-100 hover:border-green-300 transition-all duration-200 hover:shadow-md"
-                                                >
-                                                    <div className="text-lg font-bold text-green-800 mb-1">
-                                                        {new Date(slot.dateTime).toLocaleTimeString('en-GB', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                    </div>
-                                                    <div className="text-sm text-green-600 font-medium">
-                                                        {slot.locationName}
-                                                    </div>
-                                                    <div className="text-xs text-green-500 mt-2 bg-green-200 px-2 py-1 rounded-full">
-                                                        Available
-                                                    </div>
+                {/* Locations Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {locations.map((location) => (
+                        <div key={location.id} className="relative">
+                            {location.available ? (
+                                <Link href={`/courts/${location.id}`}>
+                                    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border-2 border-transparent hover:border-green-300">
+                                        <div className="p-6">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getTypeColor(location.type)}`}>
+                                                    {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
                                                 </div>
-                                            ))}
+                                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                                {location.name}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm mb-4">
+                                                {location.description}
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center text-green-600 font-medium">
+                                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    View Availability
+                                                </div>
+                                                {location.hasFloodLights && (
+                                                    <div className="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs border border-yellow-200">
+                                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                        </svg>
+                                                        Lights
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
+                                </Link>
+                            ) : (
+                                <div className="bg-white rounded-2xl shadow-lg opacity-60 cursor-not-allowed border-2 border-gray-200">
+                                    <div className="p-6">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getTypeColor(location.type)}`}>
+                                                {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
+                                            </div>
+                                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m8-5a6 6 0 11-12 0 6 6 0 0112 0z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                            {location.name}
+                                        </h3>
+                                        <p className="text-gray-600 text-sm mb-4">
+                                            {location.description}
+                                        </p>
+                                        <div className="flex items-center text-gray-400 font-medium">
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m8-5a6 6 0 11-12 0 6 6 0 0112 0z" />
+                                            </svg>
+                                            Coming Soon
+                                        </div>
+                                    </div>
+                                    <div className="absolute inset-0 bg-gray-50 bg-opacity-50 rounded-2xl"></div>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    </>
-                )}
+                    ))}
+                </div>
 
-                {/* No Slots Found */}
-                {slots.length === 0 && !loading && (
-                    <div className="text-center py-16">
-                        <div className="text-6xl mb-4"></div>
-                        <h3 className="text-2xl font-bold text-gray-700 mb-2">No Available Slots</h3>
-                        <p className="text-gray-600 mb-6">All courts are currently booked for the next 2 weeks</p>
-                        <button
-                            onClick={fetchAvailability}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition-colors"
-                        >
-                            Check Again
-                        </button>
+                {/* Info Section */}
+                <div className="mt-12 bg-white rounded-2xl shadow-lg p-8">
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                            How it works
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span className="text-green-600 font-bold text-lg">1</span>
+                                </div>
+                                <h3 className="font-semibold text-gray-900 mb-2">Select Location</h3>
+                                <p className="text-gray-600 text-sm">Choose your preferred leisure centre and court type</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span className="text-green-600 font-bold text-lg">2</span>
+                                </div>
+                                <h3 className="font-semibold text-gray-900 mb-2">View Availability</h3>
+                                <p className="text-gray-600 text-sm">See real-time court availability for the next 2 weeks</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span className="text-green-600 font-bold text-lg">3</span>
+                                </div>
+                                <h3 className="font-semibold text-gray-900 mb-2">Book Direct</h3>
+                                <p className="text-gray-600 text-sm">Contact the leisure centre to book your preferred slot</p>
+                            </div>
+                        </div>
                     </div>
-                )}
+                </div>
 
                 {/* Footer */}
                 <div className="text-center mt-12 text-gray-600">
                     <p className="text-sm">
-                        Built for The Triangle Leisure Centre padel enthusiasts
+                        Built for local court enthusiasts
                     </p>
                 </div>
             </div>
