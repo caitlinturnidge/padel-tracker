@@ -321,12 +321,27 @@ export default function CourtAvailability() {
                               minute: '2-digit'
                             })}
                           </div>
-                          <div className="text-sm text-green-600 font-medium">
+                          <div className="text-sm text-green-600 font-medium mb-2">
                             {slot.locationName}
                           </div>
-                          <div className="text-xs text-green-500 mt-2 bg-green-200 px-2 py-1 rounded-full">
-                            Available
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="text-xs text-green-500 bg-green-200 px-2 py-1 rounded-full">
+                              Available
+                            </div>
+                            <div className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full font-medium border border-blue-200">
+                              £0.00
+                            </div>
                           </div>
+                          <button
+                            onClick={() => {
+                              // TODO: Add booking URL here
+                              console.log('Book slot:', slot);
+                              alert('Booking URL will be added here');
+                            }}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors duration-200"
+                          >
+                            Book Now
+                          </button>
                         </div>
                       ))}
                     </div>

@@ -9,6 +9,7 @@ interface Location {
     available: boolean;
     description: string;
     hasFloodLights?: boolean;
+    price?: string;
 }
 
 const locations: Location[] = [
@@ -18,7 +19,8 @@ const locations: Location[] = [
         type: 'padel',
         available: true,
         description: 'The Triangle Leisure Centre - Padel Courts',
-        hasFloodLights: true
+        hasFloodLights: true,
+        price: 'Membership'
     },
     {
         id: 'triangle-tennis',
@@ -26,7 +28,8 @@ const locations: Location[] = [
         type: 'tennis',
         available: true,
         description: 'The Triangle Leisure Centre - Tennis Courts',
-        hasFloodLights: true
+        hasFloodLights: true,
+        price: 'Membership'
     },
     {
         id: 'patcham-tennis',
@@ -34,7 +37,8 @@ const locations: Location[] = [
         type: 'tennis',
         available: true,
         description: 'Patcham Tennis Courts',
-        hasFloodLights: false
+        hasFloodLights: false,
+        price: '£9.30'
     },
     {
         id: 'hove-padel',
@@ -42,7 +46,8 @@ const locations: Location[] = [
         type: 'padel',
         available: false,
         description: 'Seafront Padel Courts',
-        hasFloodLights: true
+        hasFloodLights: true,
+        price: '£28.00'
     },
     {
         id: 'hove-tennis',
@@ -50,7 +55,8 @@ const locations: Location[] = [
         type: 'tennis',
         available: true,
         description: 'Seafront Tennis Courts',
-        hasFloodLights: true
+        hasFloodLights: true,
+        price: '£8.90'
     },
     {
         id: 'archbishop-tennis',
@@ -58,7 +64,8 @@ const locations: Location[] = [
         type: 'tennis',
         available: false,
         description: 'Archbishop Tennis Courts',
-        hasFloodLights: false
+        hasFloodLights: false,
+        price: '£10/hr'
     },
     {
         id: 'hyde-park-tennis',
@@ -66,7 +73,8 @@ const locations: Location[] = [
         type: 'tennis',
         available: false,
         description: 'Hyde Park Tennis Courts',
-        hasFloodLights: false
+        hasFloodLights: false,
+        price: '£9/hr'
     }
 ];
 
@@ -132,14 +140,24 @@ export default function LocationsPage() {
                                                     </svg>
                                                     View Availability
                                                 </div>
-                                                {location.hasFloodLights && (
-                                                    <div className="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs border border-yellow-200">
-                                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                                        </svg>
-                                                        Lights
-                                                    </div>
-                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    {location.price && (
+                                                        <div className="flex items-center bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs border border-blue-200">
+                                                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                                            </svg>
+                                                            {location.price}
+                                                        </div>
+                                                    )}
+                                                    {location.hasFloodLights && (
+                                                        <div className="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs border border-yellow-200">
+                                                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                            </svg>
+                                                            Lights
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -177,37 +195,7 @@ export default function LocationsPage() {
                     ))}
                 </div>
 
-                {/* Info Section */}
-                <div className="mt-12 bg-white rounded-2xl shadow-lg p-8">
-                    <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                            How it works
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <span className="text-green-600 font-bold text-lg">1</span>
-                                </div>
-                                <h3 className="font-semibold text-gray-900 mb-2">Select Location</h3>
-                                <p className="text-gray-600 text-sm">Choose your preferred leisure centre and court type</p>
-                            </div>
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <span className="text-green-600 font-bold text-lg">2</span>
-                                </div>
-                                <h3 className="font-semibold text-gray-900 mb-2">View Availability</h3>
-                                <p className="text-gray-600 text-sm">See real-time court availability for the next 2 weeks</p>
-                            </div>
-                            <div className="text-center">
-                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <span className="text-green-600 font-bold text-lg">3</span>
-                                </div>
-                                <h3 className="font-semibold text-gray-900 mb-2">Book Direct</h3>
-                                <p className="text-gray-600 text-sm">Contact the leisure centre to book your preferred slot</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 {/* Footer */}
                 <div className="text-center mt-12 text-gray-600">
