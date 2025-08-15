@@ -40,6 +40,12 @@ const LOCATION_CONFIGS: { [key: string]: { activityId: string; siteId: string; l
     locationId: '', // not used for Matchi
     type: 'hove'
   },
+  'hove-padel': {
+    activityId: '2668', // facility ID for Matchi
+    siteId: '5', // sport ID for padel
+    locationId: '', // not used for Matchi
+    type: 'hove'
+  },
   'patcham-tennis': {
     activityId: '883bec85-55c3-4765-82e9-87c94210abde', // venue ID for LTA
     siteId: '', // not used for LTA
@@ -48,12 +54,14 @@ const LOCATION_CONFIGS: { [key: string]: { activityId: string; siteId: string; l
   }
 };
 
-async function fetchHoveSlotAvailability(dateTime: Date): Promise<AvailabilitySlot[]> {
+async function fetchHoveSlotAvailability(dateTime: Date, locationKey: string): Promise<AvailabilitySlot[]> {
   const dateStr = dateTime.toISOString().split('T')[0]; // Format: 2025-08-10
-  const url = `https://www.matchi.se/book/listSlots?facility=2668&date=${dateStr}&sport=1`;
+  const config = LOCATION_CONFIGS[locationKey];
+  const sportId = config.siteId; // 1 for tennis, 5 for padel
+  const url = `https://www.matchi.se/book/listSlots?facility=2668&date=${dateStr}&sport=${sportId}`;
   
   // Check cache first to prevent duplicate calls
-  const cacheKey = `hove-${dateStr}`;
+  const cacheKey = `hove-${locationKey}-${dateStr}`;
   if (requestCache.has(cacheKey)) {
     return requestCache.get(cacheKey)!;
   }
@@ -65,15 +73,15 @@ async function fetchHoveSlotAvailability(dateTime: Date): Promise<AvailabilitySl
     
     const slots: AvailabilitySlot[] = [];
     
-    // Much simpler approach: look for all "Tennis Court X" entries that have a "Book" button
+    // Look for both Tennis and Padel courts that have a "Book" button
     // This indicates an available court
-    const availableCourtRegex = /<td[^>]*>\s*(Tennis Court \d+)\s*<\/td>[\s\S]*?<strong>(\d+)<sup>(\d+)<\/sup><\/strong>[\s\S]*?class="btn btn-success btn-sm"/g;
+    const availableCourtRegex = /<td[^>]*>\s*((Tennis|Padel) Court \d+)\s*<\/td>[\s\S]*?<strong>(\d+)<sup>(\d+)<\/sup><\/strong>[\s\S]*?class="btn btn-success btn-sm"/g;
     
     let match;
     while ((match = availableCourtRegex.exec(html)) !== null) {
-      const courtName = match[1]; // "Tennis Court 5"
-      const hour = parseInt(match[2]); // "08"
-      const minute = parseInt(match[3]); // "00"
+      const courtName = match[1]; // "Tennis Court 5" or "Padel Court 1"
+      const hour = parseInt(match[3]); // "08"
+      const minute = parseInt(match[4]); // "00"
       
       // Create the datetime for this slot
       const slotDateTime = new Date(dateTime);
@@ -232,7 +240,7 @@ async function fetchSlotAvailability(dateTime: Date, locationKey: string): Promi
   }
   
   if (config.type === 'hove') {
-    return fetchHoveSlotAvailability(dateTime);
+    return fetchHoveSlotAvailability(dateTime, locationKey);
   } else if (config.type === 'patcham') {
     return fetchPatchamSlotAvailability(dateTime);
   } else {

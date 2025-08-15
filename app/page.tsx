@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 interface Location {
     id: string;
@@ -44,7 +45,7 @@ const locations: Location[] = [
         id: 'hove-padel',
         name: 'Hove Padel',
         type: 'padel',
-        available: false,
+        available: true,
         description: 'Seafront Padel Courts',
         hasFloodLights: true,
         price: '£28.00'
@@ -79,7 +80,11 @@ const locations: Location[] = [
 ];
 
 export default function LocationsPage() {
+    const [mounted, setMounted] = useState(false);
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const getTypeColor = (type: 'padel' | 'tennis') => {
         return type === 'padel'
@@ -87,32 +92,43 @@ export default function LocationsPage() {
             : 'bg-blue-100 text-blue-800 border-blue-200';
     };
 
+    if (!mounted) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-200 border-t-green-600 mx-auto mb-6"></div>
+                    <p className="text-xl text-gray-700 font-medium">Loading Court Tracker...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
-            <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100" suppressHydrationWarning>
+            <div className="max-w-6xl mx-auto px-4 py-8" suppressHydrationWarning>
                 {/* Header */}
-                <div className="text-center mb-12" suppressHydrationWarning>
+                <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
-                    <h1 className="text-5xl font-bold text-gray-900 mb-3" suppressHydrationWarning>
+                    <h1 className="text-5xl font-bold text-gray-900 mb-3">
                         Court Tracker
                     </h1>
-                    <p className="text-xl text-gray-700 mb-2" suppressHydrationWarning>
+                    <p className="text-xl text-gray-700 mb-2">
                         Local Court Availability
                     </p>
-                    <p className="text-green-700 font-medium" suppressHydrationWarning>
+                    <p className="text-green-700 font-medium">
                         Select a location to view court availability
                     </p>
                 </div>
 
                 {/* Locations Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" suppressHydrationWarning>
                     {locations.map((location) => (
-                        <div key={location.id} className="relative">
+                        <div key={location.id} className="relative" suppressHydrationWarning>
                             {location.available ? (
                                 <Link href={`/courts/${location.id}`}>
                                     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border-2 border-transparent hover:border-green-300">

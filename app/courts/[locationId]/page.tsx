@@ -42,6 +42,11 @@ const locationConfig: { [key: string]: {
     description: 'Seafront Tennis Courts',
     hasFloodLights: true
   },
+  'hove-padel': {
+    name: 'Hove Padel',
+    description: 'Seafront Padel Courts',
+    hasFloodLights: true
+  },
   'patcham-tennis': {
     name: 'Patcham Tennis',
     description: 'Patcham Tennis Courts',
@@ -83,7 +88,7 @@ export default function CourtAvailability() {
       setError('');
       
       // Check if location is supported
-      if (locationId !== 'triangle-padel' && locationId !== 'triangle-tennis' && locationId !== 'hove-tennis' && locationId !== 'patcham-tennis') {
+      if (locationId !== 'triangle-padel' && locationId !== 'triangle-tennis' && locationId !== 'hove-tennis' && locationId !== 'hove-padel' && locationId !== 'patcham-tennis') {
         setError('This location is not yet available');
         setLoading(false);
         return;
@@ -324,13 +329,8 @@ export default function CourtAvailability() {
                           <div className="text-sm text-green-600 font-medium mb-2">
                             {slot.locationName}
                           </div>
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-xs text-green-500 bg-green-200 px-2 py-1 rounded-full">
-                              Available
-                            </div>
-                            <div className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full font-medium border border-blue-200">
-                              £0.00
-                            </div>
+                          <div className="text-xs text-green-500 mb-3 bg-green-200 px-2 py-1 rounded-full">
+                            Available
                           </div>
                           <button
                             onClick={() => {
