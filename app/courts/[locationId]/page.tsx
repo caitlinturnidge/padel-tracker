@@ -25,6 +25,7 @@ const locationConfig: { [key: string]: {
   name: string; 
   description: string; 
   hasFloodLights: boolean;
+  bookingUrl?: string;
   pricing?: { [timeSlot: string]: number };
 } } = {
   'triangle-padel': {
@@ -51,6 +52,30 @@ const locationConfig: { [key: string]: {
     name: 'Patcham Tennis',
     description: 'Patcham Tennis Courts',
     hasFloodLights: false
+  },
+  'archbishop-tennis': {
+    name: 'Archbishops Park',
+    description: 'Archbishops Park Tennis Courts',
+    hasFloodLights: false,
+    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/archbishops-park_307b4855-9c90-4b69-b855-415ff80a7417/'
+  },
+  'geraldine-mary-tennis': {
+    name: 'Geraldine Mary',
+    description: 'Geraldine Mary Harmsworth Tennis Courts',
+    hasFloodLights: false,
+    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/geraldine-mary-harmsworth_8d4edcff-b880-4e21-a027-ca82cc343fa5/'
+  },
+  'kennington-park-tennis': {
+    name: 'Kennington Park',
+    description: 'Kennington Park Tennis Courts',
+    hasFloodLights: false,
+    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/kennington-park_38f9b2bb-b840-45a9-9c6e-dc685f04ed25/'
+  },
+  'burgess-park-tennis': {
+    name: 'Burgess Park',
+    description: 'Burgess Park Tennis Courts',
+    hasFloodLights: false,
+    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/burgess-park_12e87a80-3f5f-4985-9e81-eb064ba8f71b/'
   }
 };
 
@@ -88,7 +113,17 @@ export default function CourtAvailability() {
       setError('');
       
       // Check if location is supported
-      if (locationId !== 'triangle-padel' && locationId !== 'triangle-tennis' && locationId !== 'hove-tennis' && locationId !== 'hove-padel' && locationId !== 'patcham-tennis') {
+      if (
+        locationId !== 'triangle-padel' &&
+        locationId !== 'triangle-tennis' &&
+        locationId !== 'hove-tennis' &&
+        locationId !== 'hove-padel' &&
+        locationId !== 'patcham-tennis' &&
+        locationId !== 'archbishop-tennis' &&
+        locationId !== 'geraldine-mary-tennis' &&
+        locationId !== 'kennington-park-tennis' &&
+        locationId !== 'burgess-park-tennis'
+      ) {
         setError('This location is not yet available');
         setLoading(false);
         return;
@@ -334,9 +369,11 @@ export default function CourtAvailability() {
                           </div>
                           <button
                             onClick={() => {
-                              // TODO: Add booking URL here
-                              console.log('Book slot:', slot);
-                              alert('Booking URL will be added here');
+                              if (location.bookingUrl) {
+                                window.open(location.bookingUrl, '_blank', 'noopener,noreferrer');
+                                return;
+                              }
+                              alert('Booking URL is not available for this location yet');
                             }}
                             className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors duration-200"
                           >

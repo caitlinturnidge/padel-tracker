@@ -51,6 +51,30 @@ const LOCATION_CONFIGS: { [key: string]: { activityId: string; siteId: string; l
     siteId: '', // not used for LTA
     locationId: '', // not used for LTA
     type: 'patcham'
+  },
+  'archbishop-tennis': {
+    activityId: '307b4855-9c90-4b69-b855-415ff80a7417', // venue ID for LTA
+    siteId: '', // not used for LTA
+    locationId: '', // not used for LTA
+    type: 'patcham' // Same type as Patcham since both use LTA API
+  },
+  'geraldine-mary-tennis': {
+    activityId: '8d4edcff-b880-4e21-a027-ca82cc343fa5', // venue ID for LTA
+    siteId: '', // not used for LTA
+    locationId: '', // not used for LTA
+    type: 'patcham'
+  },
+  'kennington-park-tennis': {
+    activityId: '38f9b2bb-b840-45a9-9c6e-dc685f04ed25', // venue ID for LTA
+    siteId: '', // not used for LTA
+    locationId: '', // not used for LTA
+    type: 'patcham'
+  },
+  'burgess-park-tennis': {
+    activityId: '12e87a80-3f5f-4985-9e81-eb064ba8f71b', // venue ID for LTA
+    siteId: '', // not used for LTA
+    locationId: '', // not used for LTA
+    type: 'patcham'
   }
 };
 
@@ -184,12 +208,14 @@ async function fetchTriangleSlotAvailability(dateTime: Date, locationKey: string
   return fetchPromise;
 }
 
-async function fetchPatchamSlotAvailability(dateTime: Date): Promise<AvailabilitySlot[]> {
+async function fetchPatchamSlotAvailability(dateTime: Date, locationKey: string): Promise<AvailabilitySlot[]> {
   const dateStr = dateTime.toISOString().split('T')[0]; // Format: 2025-08-14
-  const url = `https://www.lta.org.uk/api/courtdetail/availability?venueid=883bec85-55c3-4765-82e9-87c94210abde&date=${dateStr}`;
+  const config = LOCATION_CONFIGS[locationKey];
+  const venueId = config.activityId; // venue ID for LTA API
+  const url = `https://www.lta.org.uk/api/courtdetail/availability?venueid=${venueId}&date=${dateStr}`;
   
   // Check cache first to prevent duplicate calls
-  const cacheKey = `patcham-${dateStr}`;
+  const cacheKey = `${locationKey}-${dateStr}`;
   if (requestCache.has(cacheKey)) {
     return requestCache.get(cacheKey)!;
   }
@@ -242,7 +268,7 @@ async function fetchSlotAvailability(dateTime: Date, locationKey: string): Promi
   if (config.type === 'hove') {
     return fetchHoveSlotAvailability(dateTime, locationKey);
   } else if (config.type === 'patcham') {
-    return fetchPatchamSlotAvailability(dateTime);
+    return fetchPatchamSlotAvailability(dateTime, locationKey);
   } else {
     return fetchTriangleSlotAvailability(dateTime, locationKey);
   }

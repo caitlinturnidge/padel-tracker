@@ -11,6 +11,7 @@ interface Location {
     description: string;
     hasFloodLights?: boolean;
     price?: string;
+    city: 'brighton' | 'london';
 }
 
 const locations: Location[] = [
@@ -21,7 +22,8 @@ const locations: Location[] = [
         available: true,
         description: 'The Triangle Leisure Centre - Padel Courts',
         hasFloodLights: true,
-        price: 'Membership'
+        price: 'Membership',
+        city: 'brighton'
     },
     {
         id: 'triangle-tennis',
@@ -30,7 +32,8 @@ const locations: Location[] = [
         available: true,
         description: 'The Triangle Leisure Centre - Tennis Courts',
         hasFloodLights: true,
-        price: 'Membership'
+        price: 'Membership',
+        city: 'brighton'
     },
     {
         id: 'patcham-tennis',
@@ -39,7 +42,8 @@ const locations: Location[] = [
         available: true,
         description: 'Patcham Tennis Courts',
         hasFloodLights: false,
-        price: '£9.30'
+        price: '£9.30',
+        city: 'brighton'
     },
     {
         id: 'hove-padel',
@@ -48,7 +52,8 @@ const locations: Location[] = [
         available: true,
         description: 'Seafront Padel Courts',
         hasFloodLights: true,
-        price: '£28.00'
+        price: '£28.00',
+        city: 'brighton'
     },
     {
         id: 'hove-tennis',
@@ -57,16 +62,45 @@ const locations: Location[] = [
         available: true,
         description: 'Seafront Tennis Courts',
         hasFloodLights: true,
-        price: '£8.90'
+        price: '£8.90',
+        city: 'brighton'
     },
     {
         id: 'archbishop-tennis',
-        name: 'Archbishop Tennis',
+        name: 'Archbishops Park',
         type: 'tennis',
-        available: false,
-        description: 'Archbishop Tennis Courts',
+        available: true,
+        description: 'Archbishops Park Tennis Courts',
         hasFloodLights: false,
-        price: '£10/hr'
+        price: '£7.70',
+        city: 'london'
+    },
+    {
+        id: 'geraldine-mary-tennis',
+        name: 'Geraldine Mary',
+        type: 'tennis',
+        available: true,
+        description: 'Geraldine Mary Harmsworth Tennis Courts',
+        hasFloodLights: false,
+        city: 'london'
+    },
+    {
+        id: 'kennington-park-tennis',
+        name: 'Kennington Park',
+        type: 'tennis',
+        available: true,
+        description: 'Kennington Park Tennis Courts',
+        hasFloodLights: false,
+        city: 'london'
+    },
+    {
+        id: 'burgess-park-tennis',
+        name: 'Burgess Park',
+        type: 'tennis',
+        available: true,
+        description: 'Burgess Park Tennis Courts',
+        hasFloodLights: false,
+        city: 'london'
     },
     {
         id: 'hyde-park-tennis',
@@ -75,12 +109,14 @@ const locations: Location[] = [
         available: false,
         description: 'Hyde Park Tennis Courts',
         hasFloodLights: false,
-        price: '£9/hr'
+        price: '£9/hr',
+        city: 'london'
     }
 ];
 
 export default function LocationsPage() {
     const [mounted, setMounted] = useState(false);
+    const [selectedCity, setSelectedCity] = useState<'brighton' | 'london'>('brighton');
 
     useEffect(() => {
         setMounted(true);
@@ -125,9 +161,33 @@ export default function LocationsPage() {
                     </p>
                 </div>
 
+                {/* City Filter */}
+                <div className="flex justify-center mb-8">
+                    <div className="flex items-center bg-white rounded-full p-1 shadow-lg">
+                        <button
+                            onClick={() => setSelectedCity('brighton')}
+                            className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${selectedCity === 'brighton'
+                                ? 'bg-green-600 text-white shadow-md'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                        >
+                            Brighton
+                        </button>
+                        <button
+                            onClick={() => setSelectedCity('london')}
+                            className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${selectedCity === 'london'
+                                ? 'bg-green-600 text-white shadow-md'
+                                : 'text-gray-600 hover:text-gray-800'
+                                }`}
+                        >
+                            London
+                        </button>
+                    </div>
+                </div>
+
                 {/* Locations Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" suppressHydrationWarning>
-                    {locations.map((location) => (
+                    {locations.filter(location => location.city === selectedCity).map((location) => (
                         <div key={location.id} className="relative" suppressHydrationWarning>
                             {location.available ? (
                                 <Link href={`/courts/${location.id}`}>
