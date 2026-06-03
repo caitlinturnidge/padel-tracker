@@ -277,6 +277,12 @@ export default function LocationsPage() {
                     <p className="text-green-700 font-medium">
                         Select a location to view court availability
                     </p>
+                    <Link
+                        href="/search"
+                        className="inline-block mt-4 px-6 py-3 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 shadow-lg transition-colors"
+                    >
+                        Search all courts at once
+                    </Link>
                 </div>
 
                 {/* City Filter */}
