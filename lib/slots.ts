@@ -13,6 +13,7 @@ export interface CombinedSlot extends AvailabilitySlot {
   venueName: string;
   venueType: 'padel' | 'tennis';
   bookingUrl?: string;
+  venueDistanceKm?: number;
 }
 
 export function filterNonWorkingHours(slots: CombinedSlot[]): CombinedSlot[] {

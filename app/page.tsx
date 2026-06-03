@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import CourtMap from '@/app/components/CourtMap';
+import CourtMapLoader from '@/app/components/CourtMapLoader';
 import {
     distanceKm,
     formatDistance,
     lookupUkPostcode,
     type LatLng,
 } from '@/lib/geo';
+import { isGoogleMapsKeyConfigured } from '@/lib/googleMaps';
 
 interface Location {
     id: string;
@@ -157,7 +158,7 @@ export default function LocationsPage() {
     const [locationLabel, setLocationLabel] = useState<string | null>(null);
     const [locationLoading, setLocationLoading] = useState(false);
     const [locationError, setLocationError] = useState('');
-    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    const mapsKeyConfigured = isGoogleMapsKeyConfigured();
 
     useEffect(() => {
         setMounted(true);
@@ -277,12 +278,20 @@ export default function LocationsPage() {
                     <p className="text-green-700 font-medium">
                         Select a location to view court availability
                     </p>
-                    <Link
-                        href="/search"
-                        className="inline-block mt-4 px-6 py-3 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 shadow-lg transition-colors"
-                    >
-                        Search all courts at once
-                    </Link>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
+                        <Link
+                            href="/nearby"
+                            className="inline-block px-6 py-3 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 shadow-lg transition-colors"
+                        >
+                            Find courts near me
+                        </Link>
+                        <Link
+                            href="/search"
+                            className="inline-block px-6 py-3 rounded-full border-2 border-green-600 text-green-700 font-semibold hover:bg-green-50 transition-colors"
+                        >
+                            Search all courts
+                        </Link>
+                    </div>
                 </div>
 
                 {/* City Filter */}
@@ -374,9 +383,8 @@ export default function LocationsPage() {
                             </p>
                         </div>
                         <div className="h-[380px]">
-                            {googleMapsApiKey ? (
-                                <CourtMap
-                                    apiKey={googleMapsApiKey}
+                            {mapsKeyConfigured ? (
+                                <CourtMapLoader
                                     center={mapCenter}
                                     zoom={mapZoom}
                                     courts={selectedCityLocations}
@@ -393,7 +401,12 @@ export default function LocationsPage() {
                             ) : (
                                 <div className="h-full flex items-center justify-center bg-gray-50 px-6 text-center">
                                     <p className="text-gray-600 max-w-md">
-                                        Add <code className="bg-gray-100 px-1 py-0.5 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to your <code className="bg-gray-100 px-1 py-0.5 rounded">.env.local</code> to enable the interactive map.
+                                        Add <code className="bg-gray-100 px-1 py-0.5 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to{' '}
+                                        <code className="bg-gray-100 px-1 py-0.5 rounded">.env.local</code> (project root), then restart{' '}
+                                        <code className="bg-gray-100 px-1 py-0.5 rounded">npm run dev</code>.
+                                        <span className="block mt-2 text-sm text-gray-500">
+                                            CRON_SECRET does not power the map — only the NEXT_PUBLIC key above.
+                                        </span>
                                     </p>
                                 </div>
                             )}

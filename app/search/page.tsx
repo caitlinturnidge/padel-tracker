@@ -5,81 +5,19 @@ import { useMemo, useState } from 'react';
 import {
   COURT_LOCATIONS,
   SEARCHABLE_COURTS,
-  type CourtLocation,
   type City,
   type CourtType,
 } from '@/lib/locations';
+import { searchCourtsInBatches, type VenueSearchResult } from '@/lib/searchAvailability';
 import {
   filterNonWorkingHours,
   groupSlotsByDay,
   type AvailabilitySlot,
   type CombinedSlot,
 } from '@/lib/slots';
+import { AvailabilitySearchProgress } from '@/app/components/AvailabilityResults';
 
 type SearchStatus = 'idle' | 'searching' | 'done' | 'error';
-
-interface VenueSearchResult {
-  locationId: string;
-  status: 'pending' | 'loading' | 'done' | 'error';
-  totalSlots: number;
-  error?: string;
-}
-
-const CONCURRENCY = 3;
-
-async function fetchVenueAvailability(
-  locationId: string
-): Promise<{ slots: AvailabilitySlot[]; error?: string }> {
-  try {
-    const response = await fetch(
-      `/api/availability?location=${locationId}&t=${Date.now()}`,
-      { headers: { 'Cache-Control': 'no-cache' } }
-    );
-    const data = await response.json();
-    if (!data.success) {
-      return { slots: [], error: data.error || 'Failed to fetch' };
-    }
-    return { slots: data.data ?? [] };
-  } catch {
-    return { slots: [], error: 'Network error' };
-  }
-}
-
-async function searchCourtsInBatches(
-  courts: CourtLocation[],
-  onProgress: (results: VenueSearchResult[]) => void
-): Promise<Map<string, AvailabilitySlot[]>> {
-  const byVenue = new Map<string, AvailabilitySlot[]>();
-  const progress: VenueSearchResult[] = courts.map((c) => ({
-    locationId: c.id,
-    status: 'pending',
-    totalSlots: 0,
-  }));
-
-  const runCourt = async (court: CourtLocation, index: number) => {
-    progress[index] = { ...progress[index], status: 'loading' };
-    onProgress([...progress]);
-
-    const { slots, error } = await fetchVenueAvailability(court.id);
-    byVenue.set(court.id, slots);
-    progress[index] = {
-      locationId: court.id,
-      status: error ? 'error' : 'done',
-      totalSlots: slots.length,
-      error,
-    };
-    onProgress([...progress]);
-  };
-
-  for (let i = 0; i < courts.length; i += CONCURRENCY) {
-    const batch = courts.slice(i, i + CONCURRENCY);
-    await Promise.all(
-      batch.map((court, batchOffset) => runCourt(court, i + batchOffset))
-    );
-  }
-
-  return byVenue;
-}
 
 export default function SearchPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
@@ -181,6 +119,12 @@ export default function SearchPage() {
           <p className="text-gray-700">
             Check availability across multiple venues in one go (next 2 weeks).
           </p>
+          <Link
+            href="/nearby"
+            className="inline-block mt-3 text-green-700 font-medium hover:underline"
+          >
+            Or search by distance from your location →
+          </Link>
         </div>
 
         {/* Presets */}
@@ -322,25 +266,7 @@ export default function SearchPage() {
 
         {/* Progress */}
         {searchStatus === 'searching' && venueProgress.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-green-100">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">Progress</h2>
-            <ul className="space-y-2">
-              {venueProgress.map((v) => {
-                const court = COURT_LOCATIONS.find((c) => c.id === v.locationId);
-                return (
-                  <li key={v.locationId} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-800">{court?.name ?? v.locationId}</span>
-                    <span className="text-gray-500">
-                      {v.status === 'pending' && 'Waiting…'}
-                      {v.status === 'loading' && 'Checking…'}
-                      {v.status === 'done' && `${v.totalSlots} slots`}
-                      {v.status === 'error' && (v.error ?? 'Error')}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <AvailabilitySearchProgress venueProgress={venueProgress} />
         )}
 
         {/* Summary */}
