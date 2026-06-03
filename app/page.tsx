@@ -1,7 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import CourtMap from '@/app/components/CourtMap';
+import {
+    distanceKm,
+    formatDistance,
+    lookupUkPostcode,
+    type LatLng,
+} from '@/lib/geo';
 
 interface Location {
     id: string;
@@ -12,6 +19,8 @@ interface Location {
     hasFloodLights?: boolean;
     price?: string;
     city: 'brighton' | 'london';
+    lat: number;
+    lng: number;
 }
 
 const locations: Location[] = [
@@ -23,7 +32,9 @@ const locations: Location[] = [
         description: 'The Triangle Leisure Centre - Padel Courts',
         hasFloodLights: true,
         price: 'Membership',
-        city: 'brighton'
+        city: 'brighton',
+        lat: 50.8397,
+        lng: -0.1504
     },
     {
         id: 'triangle-tennis',
@@ -33,7 +44,9 @@ const locations: Location[] = [
         description: 'The Triangle Leisure Centre - Tennis Courts',
         hasFloodLights: true,
         price: 'Membership',
-        city: 'brighton'
+        city: 'brighton',
+        lat: 50.8397,
+        lng: -0.1504
     },
     {
         id: 'patcham-tennis',
@@ -43,7 +56,9 @@ const locations: Location[] = [
         description: 'Patcham Tennis Courts',
         hasFloodLights: false,
         price: '£9.30',
-        city: 'brighton'
+        city: 'brighton',
+        lat: 50.8648,
+        lng: -0.1512
     },
     {
         id: 'hove-padel',
@@ -53,7 +68,9 @@ const locations: Location[] = [
         description: 'Seafront Padel Courts',
         hasFloodLights: true,
         price: '£28.00',
-        city: 'brighton'
+        city: 'brighton',
+        lat: 50.8212,
+        lng: -0.1632
     },
     {
         id: 'hove-tennis',
@@ -63,7 +80,9 @@ const locations: Location[] = [
         description: 'Seafront Tennis Courts',
         hasFloodLights: true,
         price: '£8.90',
-        city: 'brighton'
+        city: 'brighton',
+        lat: 50.8212,
+        lng: -0.1632
     },
     {
         id: 'archbishop-tennis',
@@ -73,7 +92,9 @@ const locations: Location[] = [
         description: 'Archbishops Park Tennis Courts',
         hasFloodLights: false,
         price: '£7.70',
-        city: 'london'
+        city: 'london',
+        lat: 51.4877,
+        lng: -0.1254
     },
     {
         id: 'geraldine-mary-tennis',
@@ -82,7 +103,9 @@ const locations: Location[] = [
         available: true,
         description: 'Geraldine Mary Harmsworth Tennis Courts',
         hasFloodLights: false,
-        city: 'london'
+        city: 'london',
+        lat: 51.4945,
+        lng: -0.1138
     },
     {
         id: 'kennington-park-tennis',
@@ -91,7 +114,9 @@ const locations: Location[] = [
         available: true,
         description: 'Kennington Park Tennis Courts',
         hasFloodLights: false,
-        city: 'london'
+        city: 'london',
+        lat: 51.4824,
+        lng: -0.1112
     },
     {
         id: 'burgess-park-tennis',
@@ -100,7 +125,9 @@ const locations: Location[] = [
         available: true,
         description: 'Burgess Park Tennis Courts',
         hasFloodLights: false,
-        city: 'london'
+        city: 'london',
+        lat: 51.4834,
+        lng: -0.0779
     },
     {
         id: 'hyde-park-tennis',
@@ -110,23 +137,114 @@ const locations: Location[] = [
         description: 'Hyde Park Tennis Courts',
         hasFloodLights: false,
         price: '£9/hr',
-        city: 'london'
+        city: 'london',
+        lat: 51.5078,
+        lng: -0.1629
     }
 ];
+
+const CITY_CENTERS: Record<'brighton' | 'london', LatLng> = {
+    brighton: { lat: 50.8309, lng: -0.1409 },
+    london: { lat: 51.4890, lng: -0.1130 },
+};
 
 export default function LocationsPage() {
     const [mounted, setMounted] = useState(false);
     const [selectedCity, setSelectedCity] = useState<'brighton' | 'london'>('brighton');
+    const [selectedMapLocation, setSelectedMapLocation] = useState<Location | null>(null);
+    const [userPosition, setUserPosition] = useState<LatLng | null>(null);
+    const [postcodeInput, setPostcodeInput] = useState('');
+    const [locationLabel, setLocationLabel] = useState<string | null>(null);
+    const [locationLoading, setLocationLoading] = useState(false);
+    const [locationError, setLocationError] = useState('');
+    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    const applyUserPosition = useCallback((position: LatLng, label: string) => {
+        setUserPosition(position);
+        setLocationLabel(label);
+        setLocationError('');
+
+        const nearest = [...locations].sort(
+            (a, b) =>
+                distanceKm(position, a) - distanceKm(position, b)
+        )[0];
+        if (nearest) {
+            setSelectedCity(nearest.city);
+        }
+    }, []);
+
+    const handleUseMyLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation is not supported in this browser.');
+            return;
+        }
+
+        setLocationLoading(true);
+        setLocationError('');
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                applyUserPosition(
+                    { lat: pos.coords.latitude, lng: pos.coords.longitude },
+                    'Your current location'
+                );
+                setLocationLoading(false);
+            },
+            () => {
+                setLocationError('Could not access your location. Try entering a postcode instead.');
+                setLocationLoading(false);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+
+    const handlePostcodeSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = postcodeInput.trim();
+        if (!trimmed) return;
+
+        setLocationLoading(true);
+        setLocationError('');
+
+        const result = await lookupUkPostcode(trimmed);
+        if (!result) {
+            setLocationError('Postcode not found. Check the format and try again.');
+            setLocationLoading(false);
+            return;
+        }
+
+        applyUserPosition(result, trimmed.toUpperCase());
+        setLocationLoading(false);
+    };
+
+    const clearUserLocation = () => {
+        setUserPosition(null);
+        setLocationLabel(null);
+        setPostcodeInput('');
+        setLocationError('');
+    };
 
     const getTypeColor = (type: 'padel' | 'tennis') => {
         return type === 'padel'
             ? 'bg-green-100 text-green-800 border-green-200'
             : 'bg-blue-100 text-blue-800 border-blue-200';
     };
+
+    const selectedCityLocations = useMemo(() => {
+        const filtered = locations.filter((location) => location.city === selectedCity);
+        if (!userPosition) return filtered;
+
+        return [...filtered].sort(
+            (a, b) => distanceKm(userPosition, a) - distanceKm(userPosition, b)
+        );
+    }, [selectedCity, userPosition]);
+
+    const mapCenter = userPosition ?? CITY_CENTERS[selectedCity];
+    const mapZoom = userPosition ? 13 : 12;
 
     if (!mounted) {
         return (
@@ -185,9 +303,101 @@ export default function LocationsPage() {
                     </div>
                 </div>
 
+                {/* Find nearest courts */}
+                <div className="mb-6">
+                    <div className="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+                        <h2 className="text-xl font-bold text-gray-900 mb-1">Find nearest courts</h2>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Use your location or a UK postcode to sort courts by distance and centre the map.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <form onSubmit={handlePostcodeSearch} className="flex flex-1 gap-2">
+                                <input
+                                    type="text"
+                                    value={postcodeInput}
+                                    onChange={(e) => setPostcodeInput(e.target.value)}
+                                    placeholder="e.g. BN1 4GW or SW1A 1AA"
+                                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={locationLoading || !postcodeInput.trim()}
+                                    className="px-5 py-3 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                >
+                                    Search
+                                </button>
+                            </form>
+                            <button
+                                type="button"
+                                onClick={handleUseMyLocation}
+                                disabled={locationLoading}
+                                className="px-5 py-3 rounded-xl border-2 border-green-600 text-green-700 font-medium hover:bg-green-50 disabled:opacity-50 transition-colors whitespace-nowrap"
+                            >
+                                {locationLoading ? 'Locating…' : 'Use my location'}
+                            </button>
+                        </div>
+                        {locationError && (
+                            <p className="mt-3 text-sm text-red-600">{locationError}</p>
+                        )}
+                        {userPosition && locationLabel && (
+                            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                                <span className="text-gray-700">
+                                    Showing distance from <strong>{locationLabel}</strong>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={clearUserLocation}
+                                    className="text-green-700 font-medium hover:text-green-800"
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Court Map */}
+                <div className="mb-10">
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-green-100">
+                        <div className="px-6 py-4 border-b border-green-100">
+                            <h2 className="text-2xl font-bold text-gray-900">Court Map</h2>
+                            <p className="text-sm text-gray-600">
+                                {userPosition
+                                    ? `Courts in ${selectedCity === 'brighton' ? 'Brighton' : 'London'}, sorted by distance from you.`
+                                    : `Explore court locations in ${selectedCity === 'brighton' ? 'Brighton' : 'London'}.`}
+                            </p>
+                        </div>
+                        <div className="h-[380px]">
+                            {googleMapsApiKey ? (
+                                <CourtMap
+                                    apiKey={googleMapsApiKey}
+                                    center={mapCenter}
+                                    zoom={mapZoom}
+                                    courts={selectedCityLocations}
+                                    userPosition={userPosition}
+                                    selectedCourt={selectedMapLocation}
+                                    onSelectCourt={(court) =>
+                                        setSelectedMapLocation(
+                                            court
+                                                ? locations.find((l) => l.id === court.id) ?? null
+                                                : null
+                                        )
+                                    }
+                                />
+                            ) : (
+                                <div className="h-full flex items-center justify-center bg-gray-50 px-6 text-center">
+                                    <p className="text-gray-600 max-w-md">
+                                        Add <code className="bg-gray-100 px-1 py-0.5 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to your <code className="bg-gray-100 px-1 py-0.5 rounded">.env.local</code> to enable the interactive map.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Locations Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" suppressHydrationWarning>
-                    {locations.filter(location => location.city === selectedCity).map((location) => (
+                    {selectedCityLocations.map((location) => (
                         <div key={location.id} className="relative" suppressHydrationWarning>
                             {location.available ? (
                                 <Link href={`/courts/${location.id}`}>
@@ -205,6 +415,11 @@ export default function LocationsPage() {
                                             </div>
                                             <h3 className="text-xl font-bold text-gray-900 mb-2">
                                                 {location.name}
+                                                {userPosition && (
+                                                    <span className="ml-2 text-sm font-medium text-green-700">
+                                                        {formatDistance(distanceKm(userPosition, location))}
+                                                    </span>
+                                                )}
                                             </h3>
                                             <p className="text-gray-600 text-sm mb-4">
                                                 {location.description}
