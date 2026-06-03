@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { getCourtById } from '@/lib/locations';
+import { hasAvailabilityApi } from '@/lib/availabilityConfig';
 
 interface AvailabilitySlot {
   locationId: string;
@@ -21,64 +23,6 @@ interface ApiResponse {
   totalSlots: number;
 }
 
-const locationConfig: { [key: string]: { 
-  name: string; 
-  description: string; 
-  hasFloodLights: boolean;
-  bookingUrl?: string;
-  pricing?: { [timeSlot: string]: number };
-} } = {
-  'triangle-padel': {
-    name: 'Triangle Padel',
-    description: 'The Triangle Leisure Centre - Padel Courts',
-    hasFloodLights: false
-  },
-  'triangle-tennis': {
-    name: 'Triangle Tennis',
-    description: 'The Triangle Leisure Centre - Tennis Courts',
-    hasFloodLights: false
-  },
-  'hove-tennis': {
-    name: 'Hove Tennis',
-    description: 'Seafront Tennis Courts',
-    hasFloodLights: true
-  },
-  'hove-padel': {
-    name: 'Hove Padel',
-    description: 'Seafront Padel Courts',
-    hasFloodLights: true
-  },
-  'patcham-tennis': {
-    name: 'Patcham Tennis',
-    description: 'Patcham Tennis Courts',
-    hasFloodLights: false
-  },
-  'archbishop-tennis': {
-    name: 'Archbishops Park',
-    description: 'Archbishops Park Tennis Courts',
-    hasFloodLights: false,
-    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/archbishops-park_307b4855-9c90-4b69-b855-415ff80a7417/'
-  },
-  'geraldine-mary-tennis': {
-    name: 'Geraldine Mary',
-    description: 'Geraldine Mary Harmsworth Tennis Courts',
-    hasFloodLights: false,
-    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/geraldine-mary-harmsworth_8d4edcff-b880-4e21-a027-ca82cc343fa5/'
-  },
-  'kennington-park-tennis': {
-    name: 'Kennington Park',
-    description: 'Kennington Park Tennis Courts',
-    hasFloodLights: false,
-    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/kennington-park_38f9b2bb-b840-45a9-9c6e-dc685f04ed25/'
-  },
-  'burgess-park-tennis': {
-    name: 'Burgess Park',
-    description: 'Burgess Park Tennis Courts',
-    hasFloodLights: false,
-    bookingUrl: 'https://www.lta.org.uk/play/book-a-tennis-court/courts/burgess-park_12e87a80-3f5f-4985-9e81-eb064ba8f71b/'
-  }
-};
-
 export default function CourtAvailability() {
   const params = useParams();
   const locationId = params.locationId as string;
@@ -88,12 +32,7 @@ export default function CourtAvailability() {
   const [error, setError] = useState<string>('');
   const [showAfterWorkOnly, setShowAfterWorkOnly] = useState(false);
 
-  const location = locationConfig[locationId];
-
-  // Debug logging
-  console.log('Location ID:', locationId);
-  console.log('Available locations:', Object.keys(locationConfig));
-  console.log('Location found:', location);
+  const location = getCourtById(locationId);
 
   // Handle case where locationId might not be loaded yet
   if (!locationId) {
@@ -112,19 +51,8 @@ export default function CourtAvailability() {
       setLoading(true);
       setError('');
       
-      // Check if location is supported
-      if (
-        locationId !== 'triangle-padel' &&
-        locationId !== 'triangle-tennis' &&
-        locationId !== 'hove-tennis' &&
-        locationId !== 'hove-padel' &&
-        locationId !== 'patcham-tennis' &&
-        locationId !== 'archbishop-tennis' &&
-        locationId !== 'geraldine-mary-tennis' &&
-        locationId !== 'kennington-park-tennis' &&
-        locationId !== 'burgess-park-tennis'
-      ) {
-        setError('This location is not yet available');
+      if (!location?.available || !hasAvailabilityApi(locationId)) {
+        setError('Live availability is not available for this location yet');
         setLoading(false);
         return;
       }
@@ -212,7 +140,7 @@ export default function CourtAvailability() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Location not found</h1>
           <p className="text-gray-600 mb-4">
             Looking for: "{locationId}"<br/>
-            Available: {Object.keys(locationConfig).join(', ')}
+            Check the homepage for available courts.
           </p>
           <Link href="/" className="text-green-600 hover:text-green-700 font-medium">
             ← Back to locations
